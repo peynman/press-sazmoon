@@ -10,7 +10,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Larapress\FileShare\Models\FileUpload;
-use Larapress\Reports\Services\ITaskReportService;
+use Larapress\Reports\Services\TaskScheduler\ITaskSchedulerService;
 use ZipArchive;
 
 class AzmoonExtractJob implements ShouldQueue

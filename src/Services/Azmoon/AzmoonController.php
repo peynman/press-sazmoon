@@ -26,9 +26,9 @@ class AzmoonController extends Controller
     public static function registerPublicWebRoutes()
     {
         Route::get('azmoon/{product_id}/question/{index}', '\\' . self::class . '@streamAzmoonQuestionFile')
-            ->name('azmoon.any.file');
+            ->name('azmoon.any.question');
         Route::get('azmoon/{product_id}/answers/{index}', '\\' . self::class . '@streamAzmoonAnswerFile')
-            ->name('azmoon.any.file');
+            ->name('azmoon.any.answer');
     }
 
     /**
