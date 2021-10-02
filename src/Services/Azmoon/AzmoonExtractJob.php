@@ -7,7 +7,6 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Larapress\FileShare\Models\FileUpload;
 use Larapress\Reports\Services\TaskScheduler\ITaskSchedulerService;
@@ -20,15 +19,18 @@ class AzmoonExtractJob implements ShouldQueue
      * @var FileUpload
      */
     private $upload;
+    private $uploadId;
 
     /**
      * Create a new job instance.
      *
      * @param FileUpload $message
      */
-    public function __construct(FileUpload $upload)
+    public function __construct($uploadId)
     {
-        $this->upload = $upload;
+        $this->uploadId = $uploadId;
+        $this->upload = FileUpload::find($uploadId);
+        $this->onQueue(config('larapress.sazmoon.queue'));
     }
 
     public function tags()
@@ -43,14 +45,14 @@ class AzmoonExtractJob implements ShouldQueue
      */
     public function handle()
     {
-        /** @var ITaskReportService */
-        $taskService = app(ITaskReportService::class);
+        /** @var ITaskSchedulerService */
+        $taskService = app(ITaskSchedulerService::class);
 
         $taskData = ['id' => $this->upload->id];
         $taskService->startSyncronizedTaskReport(
             AzmoonZipFileProcessor::class,
             'extract-azmoon-' . $this->upload->id,
-            'Started...',
+            trans('larapress::sazmoon.file_processor_started'),
             $taskData,
             function ($onUpdate, $onSuccess, $onFailed) use ($taskData) {
                 try {
@@ -102,14 +104,14 @@ class AzmoonExtractJob implements ShouldQueue
                         }
                         $zip->close();
                     } else {
-                        $onFailed('Failed to open zip file', $taskData);
+                        $onFailed(trans('larapress::sazmoon.file_processor_error'), $taskData);
                     }
 
                     $this->upload->update([
                         'data' => $data,
                     ]);
                     $took = time() - $startTime;
-                    $onSuccess('Finished extracting azmoon, took '.$took.' sec.', $taskData);
+                    $onSuccess(trans('larapress::sazmoon.file_processor_finished', ['sec' => $took]), $taskData);
                 } catch (\Exception $e) {
                     $onFailed('Error: '.$e->getMessage(), $taskData);
                 }
